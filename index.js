@@ -14,13 +14,12 @@ app.listen(port, () => {
 })
 
 app.get("/products", (req, res) => {
-  const query = "SELECT * FROM products"
+  const query = "SELECT * FROM velas"
   db.query(query, function (error, result) {
     if (error) {
       console.error("Error to get products: ", error)
       res.status(500).send("Error to get products")
     } else {
-      console.log(result)
       console.log("Products sent to client")
       res.status(200).json(result)
     }

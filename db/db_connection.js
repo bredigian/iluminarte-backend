@@ -9,7 +9,7 @@ const connection = mysql.createConnection({
 })
 
 //ENABLE CONNECTION WITH DATABASE
-const db = connection.connect((error) => {
+connection.connect((error) => {
   if (error) {
     console.error("Error to connect to database: \n", error)
   } else {
@@ -24,4 +24,4 @@ process.on("SIGINT", () => {
   process.exit()
 })
 
-module.exports = db
+module.exports = connection
