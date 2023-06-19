@@ -1,7 +1,7 @@
 const mysql = require("mysql")
 const db_config = require("./config/db_config")
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: db_config.host,
   user: db_config.user,
   password: db_config.password,
@@ -9,19 +9,27 @@ const connection = mysql.createConnection({
 })
 
 //ENABLE CONNECTION WITH DATABASE
-connection.connect((error) => {
+pool.getConnection((error, connection) => {
   if (error) {
-    console.error("Error to connect to database: \n", error)
-  } else {
-    console.log("Connected to database")
+    if (error.code === "PROTOCOL_CONNECTION_LOST") {
+      console.error("Database connection was closed")
+    }
+    if (error.code === "ER_CON_COUNT_ERROR") {
+      console.error("Database has too many connections")
+    }
+    if (error.code === "ECONNREFUSED") {
+      console.error("Database connection was refused")
+    }
   }
+  if (connection) connection.release()
+  return
 })
 
 //CLOSE CONNECTION WITH DATABASE
 process.on("SIGINT", () => {
-  connection.end()
+  pool.end()
   console.log("Database connection closed")
   process.exit()
 })
 
-module.exports = connection
+module.exports = pool
