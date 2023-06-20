@@ -1,13 +1,16 @@
 const express = require("express")
 const cors = require("cors")
 const multer = require("multer")
+const jwt = require("jsonwebtoken")
 
 require("dotenv").config()
 
 const db = require("./db/db_connection")
+const verifyPassword = require("./fx/verifyPassword")
 
 const app = express()
 app.use(cors())
+app.use(express.json())
 app.use("/data", express.static("./data"))
 
 const upload = multer({ dest: "data" })
@@ -19,6 +22,7 @@ app.listen(port, () => {
   console.log(`Server is running on port ${port}`)
 })
 
+//GET CATEGORIES
 app.get("/categories", (req, res) => {
   const query = "SELECT * FROM categorias"
   db.query(query, (error, result) => {
@@ -32,6 +36,7 @@ app.get("/categories", (req, res) => {
   })
 })
 
+//GET PRODUCTS
 app.get("/products", (req, res) => {
   const query = "SELECT * FROM velas"
   db.query(query, (error, result) => {
@@ -55,6 +60,7 @@ app.get("/products", (req, res) => {
   })
 })
 
+//GET BLOG
 app.get("/blog", (req, res) => {
   const query = "SELECT * FROM posteos"
   db.query(query, (error, result) => {
@@ -71,6 +77,70 @@ app.get("/blog", (req, res) => {
         }
       })
       res.status(200).json(data)
+    }
+  })
+})
+
+//ADMIN LOGIN
+app.post("/authentication", (req, res) => {
+  const { email, password } = req.body
+  const query = "SELECT * FROM usuarios WHERE EMAIL = ?"
+  db.query(query, [email], async (error, user) => {
+    if (error) {
+      res.status(500).send("ERROR TO GET USER!")
+    } else {
+      if (user.length === 0) {
+        res.status(404).send("USER NOT FOUND!")
+      } else {
+        const passwordMatch = await verifyPassword(password, user[0].PASSWORD)
+        if (!passwordMatch) {
+          res.status(401).send("PASSWORD INCORRECT!")
+        } else {
+          const userData = {
+            id: user[0].ID,
+            email: user[0].EMAIL,
+          }
+          const secureKey = process.env.SECURE_KEY
+          const token = jwt.sign({ id: userData.id }, secureKey, {
+            expiresIn: 60 * 60 * 24,
+          })
+          const query = "INSERT INTO tokens (token) VALUES (?)"
+          db.query(query, [token], async (error, result) => {
+            if (error) {
+              res.status(500).send("Internal error")
+            } else {
+              res.status(200).json({ token: token, userData: userData })
+            }
+          })
+        }
+      }
+    }
+  })
+})
+
+app.post("/authentication/tokens", (req, res) => {
+  const { token } = req.body
+  const query = "SELECT * FROM tokens WHERE TOKEN = ?"
+  db.query(query, [token], (error, result) => {
+    if (error) {
+      console.log("Internal error")
+      res.status(500).send("Internal error")
+    } else {
+      try {
+        const secureKey = process.env.SECURE_KEY
+        const decodedToken = jwt.verify(result[0].TOKEN, secureKey)
+        const currentDate = Date.now()
+        if (decodedToken.exp * 1000 > currentDate) {
+          console.log("Token is valid")
+          res.status(200).json({ tokenIsValid: true })
+        } else {
+          console.log("Token expirated")
+          res.status(401).json({ tokenIsValid: false })
+        }
+      } catch {
+        console.log("Token is invalid")
+        res.status(401).json({ tokenIsValid: false })
+      }
     }
   })
 })
