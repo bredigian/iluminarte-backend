@@ -247,6 +247,21 @@ app.post("/blog", uploadBlogImages.array("images"), (req, res) => {
   })
 })
 
+//DELETE POST
+app.delete("/blog", (req, res) => {
+  const { id } = req.body
+  const query = "DELETE FROM posteos WHERE ID = ?"
+  db.query(query, id, (error, result) => {
+    if (error) {
+      console.error("Error to delete post: ", error)
+      res.status(500).json({ message: "Error to delete post" })
+    } else {
+      console.log("Post deleted")
+      res.status(200).json({ message: "Post eliminado correctamente" })
+    }
+  })
+})
+
 //ADMIN LOGIN
 app.post("/authentication", (req, res) => {
   const { email, password } = req.body
