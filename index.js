@@ -7,13 +7,20 @@ require("dotenv").config()
 
 const db = require("./db/db_connection")
 const verifyPassword = require("./fx/verifyPassword")
-
 const app = express()
 app.use(cors())
 app.use(express.json())
 app.use("/data", express.static("./data"))
 
-const upload = multer({ dest: "data" })
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./data/velas")
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname)
+  },
+})
+const uploadProductImages = multer({ storage: storage })
 
 const port = process.env.PORT
 const url = process.env.URL
@@ -42,20 +49,79 @@ app.get("/products", (req, res) => {
   db.query(query, (error, result) => {
     if (error) {
       console.error("Error to get products: ", error)
-      res.status(500).send("Error to get products!!!")
+      res.status(500).send("Error to get products")
     } else {
       const data = result.map((product) => {
         const imagesUrl = JSON.parse(product.IMAGENES)
         const imagesArray = Object.keys(imagesUrl).map((key) => {
+          const imageUrl = imagesUrl[key]
+          const imageNumber = Object.keys(imageUrl)[0]
+          const imageUrlWithNumber = `${url}/data/velas/${imageNumber}.jpg`
           return {
-            color: imagesUrl[key],
-            url: `${url}/data/velas/${key}.jpg`,
+            ...imageUrl,
+            url: imageUrlWithNumber,
           }
         })
         return { ...product, IMAGENES: imagesArray }
       })
       console.log("---- Products sent to client ----")
       res.status(200).json(data)
+    }
+  })
+})
+
+//ADD PRODUCT
+app.post("/products", uploadProductImages.array("images"), (req, res) => {
+  const { product } = req.body
+  const productData = JSON.parse(product)
+  const images = req.files
+  const imagesWithColors = images.map((image, index) => {
+    return {
+      [image.filename.replace(/\.[^/.]+$/, "")]: productData.colores[index],
+    }
+  })
+  const productDataModified = {
+    CODIGO: productData.codigo,
+    NOMBRE: productData.nombre,
+    PESO: productData.peso ? parseFloat(productData.peso) : null,
+    ALTURA: productData.altura ? parseFloat(productData.altura) : null,
+    ANCHO: productData.ancho ? parseFloat(productData.ancho) : null,
+    DIAMETRO_SUPERIOR: productData.diametro_superior
+      ? parseFloat(productData.diametro_superior)
+      : null,
+    DIAMETRO_INFERIOR: productData.diametro_inferior
+      ? parseFloat(productData.diametro_inferior)
+      : null,
+    MECHA_ECOLOGICA: productData.mecha_ecologica,
+    AROMA:
+      productData.con_aroma && productData.sin_aroma
+        ? 2
+        : productData.con_aroma
+        ? 1
+        : 0,
+    TIEMPO_QUEMADO: productData.tiempo_quemado
+      ? parseInt(productData.tiempo_quemado)
+      : null,
+    IMAGENES: JSON.stringify(imagesWithColors),
+    ETIQUETAS:
+      productData.etiquetas.length > 0
+        ? JSON.stringify(productData.etiquetas)
+        : null,
+    CATEGORIA: productData.categoria,
+  }
+  const query = "INSERT INTO velas SET ?"
+  db.query(query, productDataModified, (error, result) => {
+    if (error) {
+      if (error.code === "ER_DUP_ENTRY") {
+        res.status(409).json({ message: "El producto ya existe" })
+      } else {
+        res
+          .status(500)
+          .json({ message: "Se produjo un error al agregar el producto" })
+      }
+    } else {
+      console.log("Product added")
+      res.status(200).json({ message: "Producto agregado correctamente" })
     }
   })
 })
@@ -141,6 +207,19 @@ app.post("/authentication/tokens", (req, res) => {
         console.log("Token is invalid")
         res.status(401).json({ tokenIsValid: false })
       }
+    }
+  })
+})
+
+app.delete("/authentication/tokens", (req, res) => {
+  const { token } = req.body
+  const query = "DELETE FROM tokens WHERE TOKEN = ?"
+  db.query(query, [token], (error, result) => {
+    if (error) {
+      console.log(error)
+      res.status(500).send("Internal error")
+    } else {
+      res.status(200).send({ tokenDeleted: true })
     }
   })
 })
