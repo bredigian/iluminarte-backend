@@ -126,6 +126,21 @@ app.post("/products", uploadProductImages.array("images"), (req, res) => {
   })
 })
 
+//DELETE PRODUCT
+app.delete("/products", (req, res) => {
+  const { codigo } = req.body
+  const query = "DELETE FROM velas WHERE CODIGO = ?"
+  db.query(query, codigo, (error, result) => {
+    if (error) {
+      console.error("Error to delete product: ", error)
+      res.status(500).json({ message: "Error to delete product" })
+    } else {
+      console.log("Product deleted")
+      res.status(200).json({ message: "Producto eliminado correctamente" })
+    }
+  })
+})
+
 //GET BLOG
 app.get("/blog", (req, res) => {
   const query = "SELECT * FROM posteos"
