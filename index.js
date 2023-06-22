@@ -8,11 +8,14 @@ require("dotenv").config()
 const db = require("./db/db_connection")
 const verifyPassword = require("./fx/verifyPassword")
 const app = express()
+
+const generateId = require("./fx/generateId")
+
 app.use(cors())
 app.use(express.json())
 app.use("/data", express.static("./data"))
 
-const storage = multer.diskStorage({
+const storageProducts = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./data/velas")
   },
@@ -20,7 +23,16 @@ const storage = multer.diskStorage({
     cb(null, file.originalname)
   },
 })
-const uploadProductImages = multer({ storage: storage })
+const storageBlog = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./data/posteos")
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname)
+  },
+})
+const uploadProductImages = multer({ storage: storageProducts })
+const uploadBlogImages = multer({ storage: storageBlog })
 
 const port = process.env.PORT
 const url = process.env.URL
@@ -203,6 +215,34 @@ app.get("/blog", (req, res) => {
         }
       })
       res.status(200).json(data)
+    }
+  })
+})
+
+//ADD POST
+app.post("/blog", uploadBlogImages.array("images"), (req, res) => {
+  const { post } = req.body
+  const postData = JSON.parse(post)
+  const images = req.files
+  const imagesNames = images.map((img) => {
+    return img.originalname.replace(/\.[^/.]+$/, "")
+  })
+  const id = generateId(`${post.titulo}-${post.descripcion}`)
+  const postDataModified = {
+    ID: id,
+    TITULO: postData.titulo,
+    DESCRIPCION: postData.descripcion,
+    IMG_DETAIL: imagesNames[0],
+    IMG: imagesNames[1],
+  }
+  const query = "INSERT INTO posteos SET ?"
+  db.query(query, postDataModified, (error, result) => {
+    if (error) {
+      console.error("Error to add post: ", error)
+      res.status(500).json({ message: "Ocurrió un error al agregar el post" })
+    } else {
+      console.log("Post added")
+      res.status(200).json({ message: "Post agregado correctamente" })
     }
   })
 })
