@@ -141,6 +141,51 @@ app.delete("/products", (req, res) => {
   })
 })
 
+//UPDATE VELA OF THE MONTH
+app.put("/products/favorite", (req, res) => {
+  const { codigo } = req.body
+  const query = "UPDATE vela_del_mes SET CODIGO = ?"
+  db.query(query, codigo, (error, result) => {
+    if (error) {
+      console.error("Error to update favorite: ", error)
+      res.status(500).send("Error al actualizar vela del mes")
+    } else {
+      console.log("Favorite updated")
+      res
+        .status(200)
+        .json({ message: "Vela del mes actualizada correctamente" })
+    }
+  })
+})
+
+//GET VELA OF THE MONTH
+app.get("/products/favorite", (req, res) => {
+  const query =
+    "SELECT * FROM velas INNER JOIN vela_del_mes on velas.CODIGO = vela_del_mes.CODIGO"
+  db.query(query, (error, result) => {
+    if (error) {
+      console.error("Error to get favorite: ", error)
+      res.status(500).send("Error to get favorite")
+    } else {
+      const productData = {
+        ...result[0],
+        IMAGENES: JSON.parse(result[0].IMAGENES),
+      }
+      const imagesArray = Object.keys(productData.IMAGENES).map((key) => {
+        const imageUrl = productData.IMAGENES[key]
+        const imageNumber = Object.keys(imageUrl)[0]
+        const imageUrlWithNumber = `${url}/data/velas/${imageNumber}.jpg`
+        return {
+          ...imageUrl,
+          url: imageUrlWithNumber,
+        }
+      })
+      const response = { ...productData, IMAGENES: imagesArray }
+      res.status(200).json({ vela: response })
+    }
+  })
+})
+
 //GET BLOG
 app.get("/blog", (req, res) => {
   const query = "SELECT * FROM posteos"
