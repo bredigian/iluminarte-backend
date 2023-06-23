@@ -1,3 +1,5 @@
+require("dotenv").config()
+
 const db_config = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
