@@ -11,16 +11,18 @@ const getProducts = (req, res) => {
     } else {
       const data = result.map((product) => {
         const imagesUrl = JSON.parse(product.IMAGENES)
-        const imagesArray = Object.keys(imagesUrl).map((key) => {
-          const imageUrl = imagesUrl[key]
-          const imageNumber = Object.keys(imageUrl)[0]
-          const imageUrlWithNumber = `${URL}/data/velas/${imageNumber}.jpg`
+        const imagesArray = imagesUrl.map((img) => {
+          const nameImg = img[Object.keys(img)[0]]
           return {
-            ...imageUrl,
-            url: imageUrlWithNumber,
+            ...img,
+            url: `${URL}/data/velas/${nameImg}.jpg`,
           }
         })
-        return { ...product, IMAGENES: imagesArray }
+        return {
+          ...product,
+          IMAGENES: imagesArray,
+          ETIQUETAS: JSON.parse(product.ETIQUETAS),
+        }
       })
       console.log("---- Products sent to client ----")
       res.status(200).json(data)
@@ -33,11 +35,12 @@ const addProduct = (req, res) => {
   const { product } = req.body
   const productData = JSON.parse(product)
   const images = req.files
-  const imagesWithColors = images.map((image, index) => {
+  const imagesWithColors = productData.colores.map((color, index) => {
     return {
-      [image.filename.replace(/\.[^/.]+$/, "")]: productData.colores[index],
+      [color]: images[index]?.filename?.replace(/\.[^/.]+$/, "") || null,
     }
   })
+  console.log(imagesWithColors)
   const productDataModified = {
     CODIGO: productData.codigo,
     NOMBRE: productData.nombre,
