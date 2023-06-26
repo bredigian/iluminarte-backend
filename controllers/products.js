@@ -116,13 +116,11 @@ const getVelaOfTheMonth = (req, res) => {
         ...result[0],
         IMAGENES: JSON.parse(result[0].IMAGENES),
       }
-      const imagesArray = Object.keys(productData.IMAGENES).map((key) => {
-        const imageUrl = productData.IMAGENES[key]
-        const imageNumber = Object.keys(imageUrl)[0]
-        const imageUrlWithNumber = `${URL}/data/velas/${imageNumber}.jpg`
+      const imagesArray = productData.IMAGENES.map((img) => {
+        const nameImg = img[Object.keys(img)[0]]
         return {
-          ...imageUrl,
-          url: imageUrlWithNumber,
+          ...img,
+          url: `${URL}/data/velas/${nameImg}.jpg`,
         }
       })
       const response = { ...productData, IMAGENES: imagesArray }
