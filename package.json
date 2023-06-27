@@ -4,7 +4,7 @@
   "description": "Backend of the Iluminarte project",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index.js"
   },
   "author": "Gianluca Bredice Developer",
   "license": "ISC",
@@ -18,5 +18,8 @@
     "multer": "1.4.5-lts.1",
     "mysql": "2.18.1",
     "shortid": "^2.2.16"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
   }
 }
