@@ -22,6 +22,7 @@ const getProducts = (req, res) => {
           ...product,
           IMAGENES: imagesArray,
           ETIQUETAS: JSON.parse(product.ETIQUETAS),
+          CATEGORIAS: JSON.parse(product.CATEGORIAS),
         }
       })
       console.log("---- Products sent to client ----")
@@ -40,7 +41,6 @@ const addProduct = (req, res) => {
       [color]: images[index]?.filename?.replace(/\.[^/.]+$/, "") || null,
     }
   })
-  console.log(imagesWithColors)
   const productDataModified = {
     CODIGO: productData.codigo,
     NOMBRE: productData.nombre,
@@ -54,7 +54,9 @@ const addProduct = (req, res) => {
       ? parseFloat(productData.diametro_inferior)
       : null,
     MECHA_ECOLOGICA: productData.mecha_ecologica,
+    MECHA_TRADICIONAL: productData.mecha_tradicional,
     MECHA_LED: productData.mecha_led,
+    PARA_NAVIDAD: productData.para_navidad,
     AROMA:
       productData.con_aroma && productData.sin_aroma
         ? 2
@@ -69,7 +71,7 @@ const addProduct = (req, res) => {
       productData.etiquetas.length > 0
         ? JSON.stringify(productData.etiquetas)
         : null,
-    CATEGORIA: productData.categoria,
+    CATEGORIAS: JSON.stringify(productData.categorias),
   }
   const query = "INSERT INTO velas SET ?"
   db.query(query, productDataModified, (error, result) => {
