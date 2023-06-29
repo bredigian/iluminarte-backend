@@ -20,7 +20,6 @@ const getBlog = (req, res) => {
 const addPost = async (req, res) => {
   const { post } = req.body
   const postData = JSON.parse(post)
-  console.log(postData)
   const id =
     Date.now() + generateId(`${postData.titulo}-${postData.descripcion}`)
   const images = req.files
@@ -40,8 +39,8 @@ const addPost = async (req, res) => {
     ID: id,
     TITULO: postData.titulo,
     DESCRIPCION: postData.descripcion,
-    IMG_DETAIL: imagesUploaded[0],
-    IMG: imagesUploaded[1],
+    IMG: imagesUploaded[0],
+    IMG_DETAIL: imagesUploaded[1],
   }
   const query = "INSERT INTO posteos SET ?"
   db.query(query, postDataModified, (error, result) => {
