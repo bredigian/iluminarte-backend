@@ -1,5 +1,4 @@
 const db = require("../db/db_connection")
-const { URL } = require("../constants/api")
 const cloudinary = require("../config/cloudinary")
 
 //GET PRODUCTS
@@ -49,11 +48,14 @@ const addProduct = async (req, res) => {
         })
         const { url } = urlResult
         return {
-          [color]: url || null,
+          [color]:
+            url ||
+            "https://res.cloudinary.com/ddtbtgnax/image/upload/v1688055602/velas/slvjm1d8hrjdtpiozy63.jpg",
         }
       } else {
         return {
-          [color]: null,
+          [color]:
+            "https://res.cloudinary.com/ddtbtgnax/image/upload/v1688055602/velas/slvjm1d8hrjdtpiozy63.jpg",
         }
       }
     })
