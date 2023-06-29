@@ -1,6 +1,5 @@
 const db = require("../db/db_connection")
 const generateId = require("../middlewares/id")
-const { URL } = require("../constants/api")
 const cloudinary = require("../config/cloudinary")
 
 //GET BLOG
@@ -11,7 +10,6 @@ const getBlog = (req, res) => {
       console.error("Error to get blog: ", error)
       res.status(500).send("Error to get blog")
     } else {
-      console.log(result)
       console.log("---- Blog sent to client ----")
       res.status(200).json(result)
     }
@@ -38,7 +36,6 @@ const addPost = async (req, res) => {
       return url
     })
   )
-  console.log("imagesUploaded: ", imagesUploaded)
   const postDataModified = {
     ID: id,
     TITULO: postData.titulo,

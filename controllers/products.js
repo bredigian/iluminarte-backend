@@ -20,7 +20,6 @@ const getProducts = (req, res) => {
             url,
           }
         })
-        console.log("imagesArray: ", imagesArray)
         return {
           ...product,
           IMAGENES: imagesArray,
@@ -59,7 +58,6 @@ const addProduct = async (req, res) => {
       }
     })
   )
-  console.log(imagesWithColors)
   const productDataModified = {
     CODIGO: productData.codigo,
     NOMBRE: productData.nombre,
