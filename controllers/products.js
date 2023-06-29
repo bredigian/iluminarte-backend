@@ -1,5 +1,6 @@
 const db = require("../db/db_connection")
 const { URL } = require("../constants/api")
+const cloudinary = require("../config/cloudinary")
 
 //GET PRODUCTS
 const getProducts = (req, res) => {
@@ -12,16 +13,19 @@ const getProducts = (req, res) => {
       const data = result.map((product) => {
         const imagesUrl = JSON.parse(product.IMAGENES)
         const imagesArray = imagesUrl.map((img) => {
-          const nameImg = img[Object.keys(img)[0]]
+          const color = Object.keys(img)[0]
+          const url = img[Object.keys(img)[0]]
           return {
-            ...img,
-            url: `${URL}/data/velas/${nameImg}.jpg`,
+            color,
+            url,
           }
         })
+        console.log("imagesArray: ", imagesArray)
         return {
           ...product,
           IMAGENES: imagesArray,
           ETIQUETAS: JSON.parse(product.ETIQUETAS),
+          CATEGORIAS: JSON.parse(product.CATEGORIAS),
         }
       })
       console.log("---- Products sent to client ----")
@@ -31,15 +35,30 @@ const getProducts = (req, res) => {
 }
 
 //ADD PRODUCT
-const addProduct = (req, res) => {
+const addProduct = async (req, res) => {
   const { product } = req.body
   const productData = JSON.parse(product)
   const images = req.files
-  const imagesWithColors = productData.colores.map((color, index) => {
-    return {
-      [color]: images[index]?.filename?.replace(/\.[^/.]+$/, "") || null,
-    }
+  const imagesPath = images.map((img) => {
+    return img.path
   })
+  const imagesWithColors = await Promise.all(
+    productData.colores.map(async (color, index) => {
+      if (index < imagesPath.length) {
+        const urlResult = await cloudinary.uploader.upload(imagesPath[index], {
+          folder: "velas",
+        })
+        const { url } = urlResult
+        return {
+          [color]: url || null,
+        }
+      } else {
+        return {
+          [color]: null,
+        }
+      }
+    })
+  )
   console.log(imagesWithColors)
   const productDataModified = {
     CODIGO: productData.codigo,
@@ -54,7 +73,9 @@ const addProduct = (req, res) => {
       ? parseFloat(productData.diametro_inferior)
       : null,
     MECHA_ECOLOGICA: productData.mecha_ecologica,
+    MECHA_TRADICIONAL: productData.mecha_tradicional,
     MECHA_LED: productData.mecha_led,
+    PARA_NAVIDAD: productData.para_navidad,
     AROMA:
       productData.con_aroma && productData.sin_aroma
         ? 2
@@ -69,7 +90,7 @@ const addProduct = (req, res) => {
       productData.etiquetas.length > 0
         ? JSON.stringify(productData.etiquetas)
         : null,
-    CATEGORIA: productData.categoria,
+    CATEGORIAS: JSON.stringify(productData.categorias),
   }
   const query = "INSERT INTO velas SET ?"
   db.query(query, productDataModified, (error, result) => {
@@ -117,10 +138,9 @@ const getVelaOfTheMonth = (req, res) => {
         IMAGENES: JSON.parse(result[0].IMAGENES),
       }
       const imagesArray = productData.IMAGENES.map((img) => {
-        const nameImg = img[Object.keys(img)[0]]
+        const url = img[Object.keys(img)[0]]
         return {
-          ...img,
-          url: `${URL}/data/velas/${nameImg}.jpg`,
+          url,
         }
       })
       const response = { ...productData, IMAGENES: imagesArray }
