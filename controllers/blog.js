@@ -1,6 +1,7 @@
 const db = require("../db/db_connection")
 const generateId = require("../middlewares/id")
 const { URL } = require("../constants/api")
+const cloudinary = require("../config/cloudinary")
 
 //GET BLOG
 const getBlog = (req, res) => {
@@ -10,35 +11,40 @@ const getBlog = (req, res) => {
       console.error("Error to get blog: ", error)
       res.status(500).send("Error to get blog")
     } else {
+      console.log(result)
       console.log("---- Blog sent to client ----")
-      const data = result.map((post) => {
-        return {
-          ...post,
-          IMG: `${URL}/data/posteos/${post.IMG}.png`,
-          IMG_DETAIL: `${URL}/data/posteos/${post.IMG_DETAIL}.png`,
-        }
-      })
-      res.status(200).json(data)
+      res.status(200).json(result)
     }
   })
 }
 
 //ADD POST
-const addPost = (req, res) => {
+const addPost = async (req, res) => {
   const { post } = req.body
   const postData = JSON.parse(post)
+  console.log(postData)
+  const id =
+    Date.now() + generateId(`${postData.titulo}-${postData.descripcion}`)
   const images = req.files
-  console.log(images)
-  const imagesNames = images.map((img) => {
-    return img.originalname.replace(/\.[^/.]+$/, "")
+  const imagesPath = images.map((img) => {
+    return img.path
   })
-  const id = generateId(`${post.titulo}-${post.descripcion}`)
+  const imagesUploaded = await Promise.all(
+    imagesPath.map(async (img) => {
+      const urlResult = await cloudinary.uploader.upload(img, {
+        folder: "posteos",
+      })
+      const { url } = urlResult
+      return url
+    })
+  )
+  console.log("imagesUploaded: ", imagesUploaded)
   const postDataModified = {
     ID: id,
     TITULO: postData.titulo,
     DESCRIPCION: postData.descripcion,
-    IMG_DETAIL: imagesNames[0],
-    IMG: imagesNames[1],
+    IMG_DETAIL: imagesUploaded[0],
+    IMG: imagesUploaded[1],
   }
   const query = "INSERT INTO posteos SET ?"
   db.query(query, postDataModified, (error, result) => {

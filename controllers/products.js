@@ -1,5 +1,6 @@
 const db = require("../db/db_connection")
 const { URL } = require("../constants/api")
+const cloudinary = require("../config/cloudinary")
 
 //GET PRODUCTS
 const getProducts = (req, res) => {
@@ -12,12 +13,14 @@ const getProducts = (req, res) => {
       const data = result.map((product) => {
         const imagesUrl = JSON.parse(product.IMAGENES)
         const imagesArray = imagesUrl.map((img) => {
-          const nameImg = img[Object.keys(img)[0]]
+          const color = Object.keys(img)[0]
+          const url = img[Object.keys(img)[0]]
           return {
-            ...img,
-            url: `${URL}/data/velas/${nameImg}.jpg`,
+            color,
+            url,
           }
         })
+        console.log("imagesArray: ", imagesArray)
         return {
           ...product,
           IMAGENES: imagesArray,
@@ -32,15 +35,31 @@ const getProducts = (req, res) => {
 }
 
 //ADD PRODUCT
-const addProduct = (req, res) => {
+const addProduct = async (req, res) => {
   const { product } = req.body
   const productData = JSON.parse(product)
   const images = req.files
-  const imagesWithColors = productData.colores.map((color, index) => {
-    return {
-      [color]: images[index]?.filename?.replace(/\.[^/.]+$/, "") || null,
-    }
+  const imagesPath = images.map((img) => {
+    return img.path
   })
+  const imagesWithColors = await Promise.all(
+    productData.colores.map(async (color, index) => {
+      if (index < imagesPath.length) {
+        const urlResult = await cloudinary.uploader.upload(imagesPath[index], {
+          folder: "velas",
+        })
+        const { url } = urlResult
+        return {
+          [color]: url || null,
+        }
+      } else {
+        return {
+          [color]: null,
+        }
+      }
+    })
+  )
+  console.log(imagesWithColors)
   const productDataModified = {
     CODIGO: productData.codigo,
     NOMBRE: productData.nombre,
@@ -119,10 +138,9 @@ const getVelaOfTheMonth = (req, res) => {
         IMAGENES: JSON.parse(result[0].IMAGENES),
       }
       const imagesArray = productData.IMAGENES.map((img) => {
-        const nameImg = img[Object.keys(img)[0]]
+        const url = img[Object.keys(img)[0]]
         return {
-          ...img,
-          url: `${URL}/data/velas/${nameImg}.jpg`,
+          url,
         }
       })
       const response = { ...productData, IMAGENES: imagesArray }
