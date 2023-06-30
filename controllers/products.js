@@ -164,10 +164,43 @@ const updateVelaOfTheMonth = (req, res) => {
   })
 }
 
+const getPrevImageForVelaOfTheMonth = (req, res) => {
+  const query = "SELECT * FROM prev_vela_del_mes"
+  db.query(query, (error, result) => {
+    if (error) {
+      console.error("Error to get prev image for vela of the month: ", error)
+      res.status(500).send("Error to get prev image for vela of the month")
+    } else {
+      const data = result[0]
+      res.status(200).json({ image: data.URL })
+    }
+  })
+}
+
+const setPrevImageForVelaOfTheMonth = async (req, res) => {
+  const file = req.file
+  const { path } = file
+  const { url } = await cloudinary.uploader.upload(path, { folder: "home" })
+  const query = "UPDATE prev_vela_del_mes SET URL = ?"
+  db.query(query, url, (error, result) => {
+    if (error) {
+      console.error("Error to set prev image for vela of the month: ", error)
+      res.status(500).send("Error to set prev image for vela of the month")
+    } else {
+      console.log("Prev image for vela of the month updated")
+      res.status(200).json({
+        message: "Imagen previa para vela del mes actualizada correctamente",
+      })
+    }
+  })
+}
+
 module.exports = {
   getProducts,
   addProduct,
   deleteProduct,
   getVelaOfTheMonth,
   updateVelaOfTheMonth,
+  getPrevImageForVelaOfTheMonth,
+  setPrevImageForVelaOfTheMonth,
 }
