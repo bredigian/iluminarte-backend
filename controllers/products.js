@@ -1,6 +1,5 @@
 const db = require("../db/db_connection")
 const cloudinary = require("../config/cloudinary")
-const { NULL_IMAGE } = require("../constants/api")
 
 //GET PRODUCTS
 const getProducts = (req, res) => {
@@ -11,18 +10,9 @@ const getProducts = (req, res) => {
       res.status(500).send("Error to get products")
     } else {
       const data = result.map((product) => {
-        const imagesUrl = JSON.parse(product.IMAGENES)
-        const imagesArray = imagesUrl.map((img) => {
-          const color = Object.keys(img)[0]
-          const url = img[Object.keys(img)[0]]
-          return {
-            color,
-            url,
-          }
-        })
         return {
           ...product,
-          IMAGENES: imagesArray,
+          IMAGENES: JSON.parse(product.IMAGENES),
           ETIQUETAS: JSON.parse(product.ETIQUETAS),
           CATEGORIAS: JSON.parse(product.CATEGORIAS),
         }
@@ -41,25 +31,23 @@ const addProduct = async (req, res) => {
   const imagesPath = images.map((img) => {
     return img.path
   })
-  const imagesWithColors = await Promise.all(
+  const imagesData = await Promise.all(
     productData.colores.map(async (color, index) => {
-      if (index < imagesPath.length) {
-        const urlResult = await cloudinary.uploader.upload(imagesPath[index], {
-          folder: "velas",
-        })
-        const { url } = urlResult
-        return {
-          [color]: url || NULL_IMAGE,
-        }
-      } else {
-        return {
-          [color]: NULL_IMAGE,
-        }
+      const urlResult = await cloudinary.uploader.upload(imagesPath[index], {
+        folder: "velas",
+        use_filename: true,
+        filename_override: productData.codigos[index],
+      })
+      const { url } = urlResult
+      return {
+        COLOR: color,
+        IMAGEN: url,
+        CODIGO: productData.codigos[index],
       }
     })
   )
   const productDataModified = {
-    CODIGO: productData.codigo,
+    CODIGO: productData.codigo_principal,
     NOMBRE: productData.nombre,
     PESO: productData.peso ? parseFloat(productData.peso) : null,
     ALTURA: productData.altura ? parseFloat(productData.altura) : null,
@@ -73,7 +61,6 @@ const addProduct = async (req, res) => {
     MECHA_ECOLOGICA: productData.mecha_ecologica,
     MECHA_TRADICIONAL: productData.mecha_tradicional,
     MECHA_LED: productData.mecha_led,
-    PARA_NAVIDAD: productData.para_navidad,
     AROMA:
       productData.con_aroma && productData.sin_aroma
         ? 2
@@ -83,7 +70,7 @@ const addProduct = async (req, res) => {
     TIEMPO_QUEMADO: productData.tiempo_quemado
       ? parseInt(productData.tiempo_quemado)
       : null,
-    IMAGENES: JSON.stringify(imagesWithColors),
+    IMAGENES: JSON.stringify(imagesData),
     ETIQUETAS:
       productData.etiquetas.length > 0
         ? JSON.stringify(productData.etiquetas)
@@ -131,18 +118,15 @@ const getVelaOfTheMonth = (req, res) => {
       console.error("Error to get favorite: ", error)
       res.status(500).send("Error to get favorite")
     } else {
-      const productData = {
-        ...result[0],
-        IMAGENES: JSON.parse(result[0].IMAGENES),
-      }
-      const imagesArray = productData.IMAGENES.map((img) => {
-        const url = img[Object.keys(img)[0]]
+      const data = result.map((product) => {
         return {
-          url,
+          ...product,
+          IMAGENES: JSON.parse(product.IMAGENES),
+          ETIQUETAS: JSON.parse(product.ETIQUETAS),
+          CATEGORIAS: JSON.parse(product.CATEGORIAS),
         }
       })
-      const response = { ...productData, IMAGENES: imagesArray }
-      res.status(200).json({ vela: response })
+      res.status(200).json({ vela: data[0] })
     }
   })
 }
@@ -180,7 +164,11 @@ const getPrevImageForVelaOfTheMonth = (req, res) => {
 const setPrevImageForVelaOfTheMonth = async (req, res) => {
   const file = req.file
   const { path } = file
-  const { url } = await cloudinary.uploader.upload(path, { folder: "home" })
+  const { url } = await cloudinary.uploader.upload(path, {
+    folder: "home",
+    use_filename: true,
+    filename_override: Date.now().toLocaleString(),
+  })
   const query = "UPDATE prev_vela_del_mes SET URL = ?"
   db.query(query, url, (error, result) => {
     if (error) {
