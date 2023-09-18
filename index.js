@@ -6,6 +6,7 @@ const categoriesRoutes = require("./routes/categories")
 const productsRoutes = require("./routes/products")
 const authRoutes = require("./routes/auth")
 const blogRoutes = require("./routes/blog")
+const contactRoutes = require("./routes/contact")
 
 require("dotenv").config()
 
@@ -20,6 +21,7 @@ app.use("/categories", categoriesRoutes)
 app.use("/products", productsRoutes)
 app.use("/authentication", authRoutes)
 app.use("/blog", blogRoutes)
+app.use("/contact", contactRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server is running on PORT ${PORT}`)
