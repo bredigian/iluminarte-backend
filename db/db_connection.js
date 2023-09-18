@@ -1,21 +1,7 @@
 const mysql = require("mysql")
-const {
-  MYSQL_HOST,
-  MYSQL_DATABASE,
-  MYSQL_CONNECTION_LIMIT,
-  MYSQL_PASSWORD,
-  MYSQL_USER,
-  MYSQL_PORT,
-} = require("./config/db_config")
+const db_config = require("./config/db_config")
 
-const pool = mysql.createPool({
-  host: MYSQL_HOST,
-  user: MYSQL_USER,
-  password: MYSQL_PASSWORD,
-  database: MYSQL_DATABASE,
-  port: MYSQL_PORT,
-  connectionLimit: MYSQL_CONNECTION_LIMIT,
-})
+const pool = mysql.createPool(db_config)
 
 //ENABLE CONNECTION WITH DATABASE
 pool.getConnection((error, connection) => {
