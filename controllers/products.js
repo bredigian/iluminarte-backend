@@ -3,14 +3,30 @@ const cloudinary = require("../config/cloudinary")
 
 //GET PRODUCTS
 const getProducts = (req, res) => {
-  const query = "SELECT * FROM velas"
-  db.query(query, (error, result) => {
+  const page = parseInt(req.query.page) || 1
+  const limit = parseInt(req.query.limit) || 30
+  const offset = (page - 1) * limit
+
+  const query = "SELECT * FROM velas LIMIT ? OFFSET ?"
+  db.query(query, [limit, offset], async (error, result) => {
     if (error) {
       console.error("Error to get products: ", error)
       res.status(500).send("Error to get products")
     } else {
-      console.log("---- Products sent to client ----")
-      res.status(200).json(result)
+      db.query("SELECT COUNT(*) AS total FROM velas", (error, pagesResult) => {
+        if (error) {
+          console.error("Error to get products: ", error)
+          res.status(500).send("Error to get products")
+        } else {
+          console.log("---- Products sent to client ----")
+          const totalPages = Math.ceil(pagesResult[0].total / limit)
+          res.status(200).json({
+            products: result,
+            currentPage: page,
+            totalPages,
+          })
+        }
+      })
     }
   })
 }

@@ -5,6 +5,7 @@ const {
   updateVelaOfTheMonth,
   getVelaOfTheMonth,
   getProducts,
+  getPages,
   getPrevImageForVelaOfTheMonth,
   setPrevImageForVelaOfTheMonth,
 } = require("../controllers/products")
