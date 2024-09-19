@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  iluminarte-api:
+    build: .
+    container_name: iluminarte-api
+    ports:
+      - 4040:4040
+    env_file:
+      - .env
+  iluminarte-database:
+    image: mysql
+    container_name: iluminarte-database
+    ports:
+      - 3307:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=iluminartedatabasepassword
+      - LANG=C.UTF-8
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+volumes:
+  mysql-data:

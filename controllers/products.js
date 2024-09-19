@@ -9,16 +9,8 @@ const getProducts = (req, res) => {
       console.error("Error to get products: ", error)
       res.status(500).send("Error to get products")
     } else {
-      const data = result.map((product) => {
-        return {
-          ...product,
-          IMAGENES: JSON.parse(product.IMAGENES),
-          ETIQUETAS: JSON.parse(product.ETIQUETAS),
-          CATEGORIAS: JSON.parse(product.CATEGORIAS),
-        }
-      })
       console.log("---- Products sent to client ----")
-      res.status(200).json(data)
+      res.status(200).json(result)
     }
   })
 }
@@ -118,15 +110,7 @@ const getVelaOfTheMonth = (req, res) => {
       console.error("Error to get favorite: ", error)
       res.status(500).send("Error to get favorite")
     } else {
-      const data = result.map((product) => {
-        return {
-          ...product,
-          IMAGENES: JSON.parse(product.IMAGENES),
-          ETIQUETAS: JSON.parse(product.ETIQUETAS),
-          CATEGORIAS: JSON.parse(product.CATEGORIAS),
-        }
-      })
-      res.status(200).json({ vela: data[0] })
+      res.status(200).json({ vela: result[0] })
     }
   })
 }

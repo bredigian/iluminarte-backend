@@ -1,7 +1,7 @@
 const express = require("express")
 const cors = require("cors")
 
-const { PORT, URL_FRONT } = require("./constants/api")
+const { PORT } = require("./constants/api")
 const categoriesRoutes = require("./routes/categories")
 const productsRoutes = require("./routes/products")
 const authRoutes = require("./routes/auth")

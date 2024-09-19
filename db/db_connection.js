@@ -1,4 +1,4 @@
-const mysql = require("mysql")
+const mysql = require("mysql2")
 const {
   MYSQL_HOST,
   MYSQL_DATABASE,
@@ -15,7 +15,7 @@ const pool = mysql.createPool({
   database: MYSQL_DATABASE,
   port: MYSQL_PORT,
   connectionLimit: MYSQL_CONNECTION_LIMIT,
-  ssl: true,
+  // ssl: true,
 })
 
 //ENABLE CONNECTION WITH DATABASE
@@ -31,7 +31,10 @@ pool.getConnection((error, connection) => {
       console.error("Database connection was refused")
     }
   }
-  if (connection) connection.release()
+  if (connection) {
+    console.log("Connected successfully!")
+    connection.release()
+  }
   return
 })
 
